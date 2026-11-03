@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Pulse</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="dashboard">
+    <header class="dashboard-header">
+      <h1 class="dashboard-title">Project Pulse</h1>
+      <p class="dashboard-subtitle">A quick look at what Mona's team is working on: who owns it, how it is going, and what changed recently.</p>
+    </header>
+
+    <section class="dashboard-summary" aria-label="Project status summary">
+      <div class="summary-item" data-status="total"><strong>0</strong> <span>Total projects</span></div>
+      <div class="summary-item" data-status="active"><strong>0</strong> <span>Active</span></div>
+      <div class="summary-item" data-status="at-risk"><strong>0</strong> <span>At risk</span></div>
+      <div class="summary-item" data-status="blocked"><strong>0</strong> <span>Blocked</span></div>
+      <div class="summary-item" data-status="paused"><strong>0</strong> <span>Paused</span></div>
+      <div class="summary-item" data-status="completed"><strong>0</strong> <span>Completed</span></div>
+    </section>
+
+    <div class="dashboard-message" role="status" aria-live="polite">Loading projects…</div>
+
+    <section class="project-grid" aria-label="Projects"></section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var DATA_URL = "project-data.json";
+
+      var STATUS_LABELS = {
+        "active": "Active",
+        "at-risk": "At risk",
+        "blocked": "Blocked",
+        "paused": "Paused",
+        "completed": "Completed"
+      };
+
+      var PRIORITY_LABELS = {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      };
+
+      var messageElement = document.querySelector(".dashboard-message");
+      var gridElement = document.querySelector(".project-grid");
+      var summaryElement = document.querySelector(".dashboard-summary");
+
+      // Trim, lowercase and replace runs of spaces/underscores with "-".
+      function normalizeKey(value) {
+        if (typeof value !== "string") {
+          return "";
+        }
+        return value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+      }
+
+      // Return a non-empty trimmed string, or the fallback text.
+      function textOrFallback(value, fallback) {
+        if (typeof value === "string" && value.trim() !== "") {
+          return value.trim();
+        }
+        if (typeof value === "number") {
+          return String(value);
+        }
+        return fallback;
+      }
+
+      // Resolve a raw value against an allowed list; unknown values keep their original text.
+      function resolveBadge(rawValue, labels) {
+        var key = normalizeKey(rawValue);
+        if (Object.prototype.hasOwnProperty.call(labels, key)) {
+          return { modifier: key, label: labels[key] };
+        }
+        return { modifier: "unknown", label: textOrFallback(rawValue, "Unknown") };
+      }
+
+      function showMessage(text, variant) {
+        messageElement.classList.remove("dashboard-message--error", "dashboard-message--empty");
+        if (variant) {
+          messageElement.classList.add("dashboard-message--" + variant);
+        }
+        messageElement.textContent = text;
+        messageElement.hidden = false;
+      }
+
+      function hideMessage() {
+        messageElement.classList.remove("dashboard-message--error", "dashboard-message--empty");
+        messageElement.textContent = "";
+        messageElement.hidden = true;
+      }
+
+      function updateSummary(projects) {
+        var counts = { "total": projects.length, "active": 0, "at-risk": 0, "blocked": 0, "paused": 0, "completed": 0 };
+        projects.forEach(function (project) {
+          var key = normalizeKey(project && project.status);
+          if (Object.prototype.hasOwnProperty.call(STATUS_LABELS, key)) {
+            counts[key] += 1;
+          }
+        });
+        var items = summaryElement.querySelectorAll(".summary-item");
+        items.forEach(function (item) {
+          var key = item.getAttribute("data-status");
+          var countElement = item.querySelector("strong");
+          countElement.textContent = String(counts[key] || 0);
+        });
+      }
+
+      function createBadge(kind, labelPrefix, badge) {
+        var badgeElement = document.createElement("span");
+        badgeElement.className = kind + " " + kind + "--" + badge.modifier;
+
+        var hiddenLabel = document.createElement("span");
+        hiddenLabel.className = "visually-hidden";
+        hiddenLabel.textContent = labelPrefix + ": ";
+
+        badgeElement.appendChild(hiddenLabel);
+        badgeElement.appendChild(document.createTextNode(badge.label));
+        return badgeElement;
+      }
+
+      // Format "YYYY-MM-DD" without timezone shifts. Returns null for invalid input.
+      function formatDate(value) {
+        if (typeof value !== "string") {
+          return null;
+        }
+        var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+        if (!match) {
+          return null;
+        }
+        var year = Number(match[1]);
+        var monthIndex = Number(match[2]) - 1;
+        var day = Number(match[3]);
+        var date = new Date(Date.UTC(year, monthIndex, day));
+        if (date.getUTCFullYear() !== year || date.getUTCMonth() !== monthIndex || date.getUTCDate() !== day) {
+          return null;
+        }
+        return {
+          iso: match[0],
+          display: date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })
+        };
+      }
+
+      function createProjectCard(project) {
+        var safeProject = (project && typeof project === "object") ? project : {};
+        var name = textOrFallback(safeProject.name, "Untitled project");
+        var owner = textOrFallback(safeProject.owner, "Unassigned");
+        var recentActivity = textOrFallback(safeProject.recentActivity, "No recent activity");
+        var status = resolveBadge(safeProject.status, STATUS_LABELS);
+        var priority = resolveBadge(safeProject.priority, PRIORITY_LABELS);
+
+        var card = document.createElement("article");
+        // Only high/medium/low have a card accent in the contract; unknown priorities get the base card.
+        card.className = priority.modifier === "unknown"
+          ? "project-card"
+          : "project-card project-card--priority-" + priority.modifier;
+
+        var nameElement = document.createElement("h2");
+        nameElement.className = "project-name";
+        nameElement.textContent = name;
+        card.appendChild(nameElement);
+
+        var ownerElement = document.createElement("p");
+        ownerElement.className = "project-owner";
+        ownerElement.textContent = "Owner: " + owner;
+        card.appendChild(ownerElement);
+
+        if (typeof safeProject.summary === "string" && safeProject.summary.trim() !== "") {
+          var summaryText = document.createElement("p");
+          summaryText.className = "project-summary";
+          summaryText.textContent = safeProject.summary.trim();
+          card.appendChild(summaryText);
+        }
+
+        var activityElement = document.createElement("p");
+        activityElement.className = "project-activity";
+        var activityLabel = document.createElement("strong");
+        activityLabel.textContent = "Recent activity: ";
+        activityElement.appendChild(activityLabel);
+        activityElement.appendChild(document.createTextNode(recentActivity));
+        card.appendChild(activityElement);
+
+        var metaElement = document.createElement("div");
+        metaElement.className = "project-meta";
+        metaElement.appendChild(createBadge("status-badge", "Status", status));
+        metaElement.appendChild(createBadge("priority-badge", "Priority", priority));
+        card.appendChild(metaElement);
+
+        var updated = formatDate(safeProject.lastUpdated);
+        if (updated) {
+          var updatedElement = document.createElement("p");
+          updatedElement.className = "project-updated";
+          updatedElement.appendChild(document.createTextNode("Updated "));
+          var timeElement = document.createElement("time");
+          timeElement.setAttribute("datetime", updated.iso);
+          timeElement.textContent = updated.display;
+          updatedElement.appendChild(timeElement);
+          card.appendChild(updatedElement);
+        }
+
+        return card;
+      }
+
+      function renderProjects(projects) {
+        gridElement.textContent = "";
+        updateSummary(projects);
+
+        if (projects.length === 0) {
+          showMessage("No projects to show yet.", "empty");
+          return;
+        }
+
+        var fragment = document.createDocumentFragment();
+        projects.forEach(function (project) {
+          fragment.appendChild(createProjectCard(project));
+        });
+        gridElement.appendChild(fragment);
+        hideMessage();
+      }
+
+      function loadProjects() {
+        showMessage("Loading projects…", null);
+
+        fetch(DATA_URL)
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Request for " + DATA_URL + " failed with HTTP " + response.status + " " + response.statusText);
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            var projects = data && Array.isArray(data.projects) ? data.projects : null;
+            if (!projects) {
+              console.warn("Project Pulse: " + DATA_URL + " has no \"projects\" array.", data);
+              renderProjects([]);
+              return;
+            }
+            renderProjects(projects);
+          })
+          .catch(function (error) {
+            console.error("Project Pulse: could not load project data.", error);
+            updateSummary([]);
+            var detail = (error && error.message) ? " (" + error.message + ")" : "";
+            showMessage(
+              "Could not load project data" + detail + ". Start the dashboard with \"Run Project Pulse Dashboard\" in VS Code, " +
+              "or run \"python3 -m http.server 5500\" from the app folder and open http://localhost:5500/index.html.",
+              "error"
+            );
+          });
+      }
+
+      loadProjects();
+    })();
+  </script>
+</body>
+</html>

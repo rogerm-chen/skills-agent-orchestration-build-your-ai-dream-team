@@ -1,0 +1,504 @@
+/* ==========================================================================
+   Project Pulse — dashboard styles
+   Owner: Designer. Single file, no external imports or fonts.
+
+   Sections
+   1. Design tokens (custom properties)
+   2. Base / page
+   3. Accessibility utilities
+   4. Dashboard layout & header
+   5. Summary strip
+   6. Status messages (loading / error / empty)
+   7. Project grid (responsive)
+   8. Project card + priority accents
+   9. Card content
+   10. Status badges
+   11. Priority badges
+   12. Reduced motion
+   ========================================================================== */
+
+/* 1. Design tokens -------------------------------------------------------- */
+:root {
+  /* Surfaces & text (contrast measured against white / page bg) */
+  --color-page-bg: #f1f5f9;          /* slate-100 */
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;             /* 17.9:1 on white */
+  --color-text-muted: #475569;       /* 7.6:1 on white, 6.9:1 on page bg */
+  --color-brand: #4338ca;            /* indigo-700, 7.9:1 on white */
+  --color-brand-soft: #e0e7ff;
+  --color-focus: #2563eb;            /* focus ring, ≥3:1 vs white & page bg */
+
+  /* Status palette: dark text on light tint (all ≥7:1) */
+  --status-active-bg: #dcfce7;    --status-active-fg: #14532d;    --status-active-border: #16a34a;
+  --status-at-risk-bg: #fef3c7;   --status-at-risk-fg: #78350f;   --status-at-risk-border: #d97706;
+  --status-blocked-bg: #fee2e2;   --status-blocked-fg: #7f1d1d;   --status-blocked-border: #dc2626;
+  --status-paused-bg: #e2e8f0;    --status-paused-fg: #1e293b;    --status-paused-border: #64748b;
+  --status-completed-bg: #dbeafe; --status-completed-fg: #1e3a8a; --status-completed-border: #2563eb;
+  --status-unknown-bg: #f3f4f6;   --status-unknown-fg: #374151;   --status-unknown-border: #6b7280;
+
+  /* Priority palette */
+  --priority-high: #b91c1c;          /* white text on it: 6.5:1; accent vs white ≥3:1 */
+  --priority-high-soft: #fef2f2;
+  --priority-medium: #b45309;        /* accent vs white 5:1 */
+  --priority-medium-bg: #ffedd5;
+  --priority-medium-fg: #7c2d12;     /* 8.9:1 on its tint */
+  --priority-low: #0369a1;           /* accent vs white 5.9:1 */
+  --priority-low-bg: #e0f2fe;
+  --priority-low-fg: #0c4a6e;        /* 8.9:1 on its tint */
+  --priority-unknown-bg: #f3f4f6;
+  --priority-unknown-fg: #374151;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.08);
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-size-base: 1rem;            /* 16px */
+  --font-size-sm: 0.875rem;          /* badges / meta only */
+  --line-height: 1.6;
+
+  --transition: 160ms ease-out;
+  --max-width: 1200px;
+}
+
+/* 2. Base / page ---------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background-color: var(--color-page-bg);
+  background-image: linear-gradient(180deg, #e0e7ff 0, var(--color-page-bg) 320px);
+  background-repeat: no-repeat;
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* 3. Accessibility utilities --------------------------------------------- */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* 4. Dashboard layout & header ------------------------------------------- */
+.dashboard {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
+.dashboard-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: clamp(1.75rem, 1.3rem + 2vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/* Decorative "pulse" dot beside the title (pure CSS, no content) */
+.dashboard-title::before {
+  content: "";
+  flex: none;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 0.18em var(--color-brand-soft);
+}
+
+.dashboard-subtitle {
+  max-width: 65ch;
+  font-size: 1.0625rem;
+  color: var(--color-text-muted);
+}
+
+/* 5. Summary strip -------------------------------------------------------- */
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-item strong {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-item span {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* 6. Status messages ------------------------------------------------------ */
+.dashboard-message {
+  padding: var(--space-4) var(--space-5);
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 6px solid var(--color-brand);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Hide the live region box when the script clears it */
+.dashboard-message:empty {
+  display: none;
+}
+
+.dashboard-message--error {
+  color: var(--status-blocked-fg);
+  background: var(--status-blocked-bg);
+  border-color: #fecaca;
+  border-left-color: var(--status-blocked-border);
+}
+
+.dashboard-message--empty {
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-style: dashed;
+  border-left-style: solid;
+  border-left-color: var(--status-unknown-border);
+  text-align: center;
+}
+
+/* 7. Project grid --------------------------------------------------------- */
+/* Explicit breakpoints give a predictable 1 / 2 / 3 column layout. */
+.project-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-items: stretch;
+}
+
+@media (min-width: 601px) {
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1025px) {
+  .project-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    padding: var(--space-5) var(--space-4) var(--space-6);
+  }
+
+  .dashboard-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  .project-card {
+    padding: var(--space-4);
+  }
+}
+
+/* 8. Project card + priority accents ------------------------------------- */
+.project-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  height: 100%;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 5px solid var(--status-unknown-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.project-card:hover,
+.project-card:focus-within {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.project-card--priority-high {
+  border-left-width: 8px;
+  border-left-color: var(--priority-high);
+  background: linear-gradient(90deg, var(--priority-high-soft) 0, var(--color-surface) 40%);
+}
+
+.project-card--priority-medium {
+  border-left-color: var(--priority-medium);
+}
+
+.project-card--priority-low {
+  border-left-color: var(--priority-low);
+}
+
+/* 9. Card content --------------------------------------------------------- */
+.project-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.project-card--priority-high .project-name {
+  font-weight: 800;
+}
+
+.project-owner {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.project-summary {
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.project-activity {
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text);
+  background: var(--color-page-bg);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+}
+
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-updated {
+  margin-top: auto;               /* pins to card bottom for even rhythm */
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* 10. Status badges ------------------------------------------------------- */
+.status-badge,
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  max-width: 100%;
+  padding: 0.2rem 0.7rem;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  overflow-wrap: anywhere;
+}
+
+/* Dot reinforces status visually; the text label remains the real signal. */
+.status-badge::before {
+  content: "";
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge--active {
+  color: var(--status-active-fg);
+  background: var(--status-active-bg);
+  border-color: var(--status-active-border);
+}
+
+.status-badge--at-risk {
+  color: var(--status-at-risk-fg);
+  background: var(--status-at-risk-bg);
+  border-color: var(--status-at-risk-border);
+}
+
+.status-badge--blocked {
+  color: var(--status-blocked-fg);
+  background: var(--status-blocked-bg);
+  border-color: var(--status-blocked-border);
+}
+
+.status-badge--paused {
+  color: var(--status-paused-fg);
+  background: var(--status-paused-bg);
+  border-color: var(--status-paused-border);
+}
+
+.status-badge--completed {
+  color: var(--status-completed-fg);
+  background: var(--status-completed-bg);
+  border-color: var(--status-completed-border);
+}
+
+.status-badge--unknown {
+  color: var(--status-unknown-fg);
+  background: var(--status-unknown-bg);
+  border-color: var(--status-unknown-border);
+  border-style: dashed;
+}
+
+/* 11. Priority badges ----------------------------------------------------- */
+.priority-badge--high {
+  color: #ffffff;
+  background: var(--priority-high);
+  border-color: var(--priority-high);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.priority-badge--medium {
+  color: var(--priority-medium-fg);
+  background: var(--priority-medium-bg);
+  border-color: var(--priority-medium);
+}
+
+.priority-badge--low {
+  color: var(--priority-low-fg);
+  background: var(--priority-low-bg);
+  border-color: var(--priority-low);
+}
+
+.priority-badge--unknown {
+  color: var(--priority-unknown-fg);
+  background: var(--priority-unknown-bg);
+  border-color: var(--status-unknown-border);
+  border-style: dashed;
+}
+
+/* 12. Reduced motion ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+
+  .project-card:hover,
+  .project-card:focus-within {
+    transform: none;
+  }
+}
+
+/* Windows High Contrast / forced colours: keep badges and accents visible */
+@media (forced-colors: active) {
+  .status-badge,
+  .priority-badge,
+  .project-card,
+  .summary-item,
+  .dashboard-message {
+    border: 1px solid CanvasText;
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "projects": [
+    {
+      "name": "Contributor Onboarding Guide",
+      "owner": "Mona Lisa",
+      "status": "active",
+      "recentActivity": "Merged the new first-issue checklist and added screenshots to the setup steps.",
+      "priority": "high",
+      "summary": "A step-by-step guide that helps new contributors open their first pull request within a day.",
+      "lastUpdated": "2026-10-30"
+    },
+    {
+      "name": "Accessibility Audit and Remediation Plan for the Public Documentation Website",
+      "owner": "Jordan Rivera",
+      "status": "at-risk",
+      "recentActivity": "Found 14 contrast issues in the docs theme; fixes are waiting on a design review.",
+      "priority": "high",
+      "summary": "Review every docs page against WCAG 2.2 AA and track fixes until the site passes.",
+      "lastUpdated": "2026-10-28"
+    },
+    {
+      "name": "CI Pipeline Speedup",
+      "owner": "Priya Patel",
+      "status": "blocked",
+      "recentActivity": "Waiting for the platform team to enable larger runners before caching changes can land.",
+      "priority": "medium",
+      "summary": "Cut average pull request build time from 18 minutes to under 8 minutes.",
+      "lastUpdated": "2026-10-25"
+    },
+    {
+      "name": "Release Notes Automation",
+      "owner": "Sam Okafor",
+      "status": "completed",
+      "recentActivity": "Shipped the workflow that drafts release notes from merged pull request labels.",
+      "priority": "medium",
+      "summary": "Generate draft release notes automatically so maintainers only need to edit, not write.",
+      "lastUpdated": "2026-10-21"
+    },
+    {
+      "name": "Community Office Hours",
+      "owner": "Alex Chen",
+      "status": "paused",
+      "recentActivity": "Sessions are on hold until the new calendar tool is approved.",
+      "priority": "low",
+      "summary": "Monthly open video calls where contributors can ask maintainers questions live.",
+      "lastUpdated": "2026-10-14"
+    },
+    {
+      "name": "Issue Triage Bot",
+      "owner": "Taylor Kim",
+      "status": "active",
+      "recentActivity": "Added auto-labelling for bug reports that include a stack trace.",
+      "priority": "low",
+      "summary": "A small bot that labels and routes new issues so nothing sits untriaged for long.",
+      "lastUpdated": "2026-11-01"
+    }
+  ]
+}
